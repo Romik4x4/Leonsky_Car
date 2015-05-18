@@ -1,3 +1,5 @@
+// Arduino 1.0.6
+// 
 //      |---------------------------------------------------------------------------|
 //      |            The hardware connections are as follows:                       |
 //      |--------------------------------|------------------------------------------|
@@ -16,10 +18,16 @@
 // 24C16WP 
 // 24C16AN
 
-const byte DEVADDR1 = 0x50; // 2048 Bytes
-const byte DEVADDR2 = 0x54; // 2048 Bytes
-
 #include <Wire.h>
+#include <I2C_eeprom.h>
+
+#define EE24C16MAXBYTES  16384/8 
+
+const byte EEPROM_ADDR1 = 0x50; // 2048 Bytes
+const byte EEPROM_ADDR2 = 0x54; // 2048 Bytes
+
+const int LED1 = 13; // Default LED
+const int LED2 = A1; // Romik LED
 
 const int inaPin = 6;    //D6
 const int inbPin = 7;    //D7
@@ -29,10 +37,15 @@ const int diagbPin = 2;  //D2
 
 int i = 0;
 
-void setup() {
+I2C_eeprom  eeprom1(EEPROM_ADDR1,EE24C16MAXBYTES);
+I2C_eeprom  eeprom2(EEPROM_ADDR2,EE24C16MAXBYTES);
 
+// ----------------------------------- Setup ---------------------------------------------------
+
+void setup() {
   
   Wire.begin();
+
 
   Serial.begin(9600);
   
@@ -43,11 +56,12 @@ void setup() {
   pinMode(diagaPin, INPUT);
   pinMode(diagbPin, INPUT);
   
-  pinMode(13,OUTPUT);
-  pinMode(A1,OUTPUT);
-  
- 
+  pinMode(LED1,OUTPUT);
+  pinMode(LED2,OUTPUT);
+   
 }
+
+// ----------------------------------------- LOOP MAIN ----------------------------------------
 
 void loop() {
 
