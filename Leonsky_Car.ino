@@ -19,9 +19,6 @@
 // 24C16AN
 
 #include <Wire.h>
-#include <I2C_eeprom.h>
-
-#define EE24C16MAXBYTES  16384/8 
 
 const byte EEPROM_ADDR1 = 0x50; // 2048 Bytes
 const byte EEPROM_ADDR2 = 0x54; // 2048 Bytes
@@ -37,28 +34,44 @@ const int diagbPin = 2;  //D2
 
 int i = 0;
 
-I2C_eeprom  eeprom1(EEPROM_ADDR1,EE24C16MAXBYTES);
-I2C_eeprom  eeprom2(EEPROM_ADDR2,EE24C16MAXBYTES);
+unsigned long currentMillis;
+unsigned long PreviousInterval = 0;        // Для всех внутренних функций
 
 // ----------------------------------- Setup ---------------------------------------------------
 
 void setup() {
-  
+
   Wire.begin();
 
 
   Serial.begin(9600);
-  
+
   pinMode(inaPin, OUTPUT);
   pinMode(inbPin, OUTPUT);
   pinMode(pwmPin, OUTPUT);
 
   pinMode(diagaPin, INPUT);
   pinMode(diagbPin, INPUT);
-  
+
   pinMode(LED1,OUTPUT);
   pinMode(LED2,OUTPUT);
-   
+
+  long sum =0;
+
+ Serial.println("Start Write");
+ 
+  for (int addr=0;addr<4096;addr++) {
+    dual_write(addr,0x1);   
+  }
+
+Serial.println("Start Read");
+ 
+ for (int addr=0;addr<4096;addr++) {
+   sum = sum + dual_read(addr);
+ }
+ 
+ Serial.println(sum);
+
 }
 
 // ----------------------------------------- LOOP MAIN ----------------------------------------
@@ -66,48 +79,62 @@ void setup() {
 void loop() {
 
   // i2c();
-  
+
   // Стоп
+
+
+  currentMillis = millis();
+
+  if(currentMillis - PreviousInterval > 1000) {
+    PreviousInterval = currentMillis;  
+    if (digitalRead(LED1) == HIGH) 
+      digitalWrite(LED1,LOW);
+    else digitalWrite(LED1,HIGH);
+
+    if (digitalRead(LED2) == HIGH) 
+      digitalWrite(LED2,LOW);
+    else digitalWrite(LED2,HIGH);
+
+  }
+
+}
+
+// -------------------------------------- Functions -----------------------------------------
+
+void motor( void ) {
+
 
   digitalWrite(inaPin, LOW);
   digitalWrite(inbPin, LOW);
   delay(500);
-  
+
   delay(5000);
-  
+
   // По часовой
   digitalWrite(inaPin, HIGH);
   digitalWrite(inbPin, LOW);
   analogWrite(pwmPin, 200);
-  digitalWrite(13,HIGH);
-  digitalWrite(A1,LOW);
-  
   delay(1500);
-  
+
   //STOP
   digitalWrite(inaPin, LOW);
   digitalWrite(inbPin, LOW);
   delay(500);
-  
+
   // Против часовой
   digitalWrite(inaPin, LOW);
   digitalWrite(inbPin, HIGH);
   analogWrite(pwmPin, 200);
-  
-  digitalWrite(13,LOW);
-  digitalWrite(A1,HIGH);
-  
   delay(1500);
-  
-   // Стоп
+
+  // Стоп
   digitalWrite(inaPin, HIGH);
   digitalWrite(inbPin, HIGH);
   delay(500);
-  
-}
 
+}
 void i2c() {
-  
+
   byte error, address;
   int nDevices;
 
@@ -147,3 +174,72 @@ void i2c() {
 
   delay(5000);           // wait 5 seconds for next scan
 }
+
+
+char dual_read(unsigned eeaddress) {
+
+  unsigned addr;
+  byte devaddr;
+  
+  if (eeaddress < 2048) {
+    addr = eeaddress;
+    devaddr = EEPROM_ADDR1; 
+  } else {
+    addr = eeaddress - 2048;
+    devaddr = EEPROM_ADDR2;
+  }
+  
+  char out = eeprom_read_byte(devaddr,addr);   
+
+  return(out);
+  
+}
+
+void dual_write(unsigned eeaddress, char data) {
+  
+  unsigned addr;
+  byte devaddr;
+  
+  if (eeaddress < 2048) {
+    addr = eeaddress;
+    devaddr = EEPROM_ADDR1; 
+  } else {
+    addr = eeaddress - 2048;
+    devaddr = EEPROM_ADDR2;
+  }
+  
+  eeprom_write_byte(devaddr,addr,data);   
+
+}
+
+
+char eeprom_read_byte(byte deviceaddress, unsigned eeaddr)
+{
+    byte rdata = -1;
+
+    // Three lsb of Device address byte are bits 8-10 of eeaddress
+    byte devaddr = deviceaddress | ((eeaddr >> 8) & 0x07);
+    byte addr    = eeaddr;
+
+    Wire.beginTransmission(devaddr);
+    Wire.write(int(addr));
+    Wire.endTransmission();
+    Wire.requestFrom(int(devaddr), 1);
+    if (Wire.available()) {
+        rdata = Wire.read();
+    }
+    return rdata;
+}
+
+void eeprom_write_byte(byte deviceaddress, int eeaddress, char data)
+{
+    // Three lsb of Device address byte are bits 8-10 of eeaddress
+    byte devaddr = deviceaddress | ((eeaddress >> 8) & 0x07);
+    byte addr    = eeaddress;
+    Wire.beginTransmission(devaddr);
+    Wire.write(int(addr));
+    Wire.write(char(data));
+    Wire.endTransmission();
+    delay(10);
+}
+
