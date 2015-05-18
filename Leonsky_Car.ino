@@ -82,7 +82,6 @@ void setup() {
   pinMode(LED1,OUTPUT);
   pinMode(LED2,OUTPUT);
 
-
   int val = map(60, 0, 1023, 0, 180);     // scale it to use it with the servo (value between 0 and 180) 
   rul_servo.write(val);       
   
@@ -100,7 +99,6 @@ void setup() {
     dual_write(writeAddr++, *p++);
 
   writeAddr = 0;
-
 
   drive.speed = 0;
   drive.left = 0;              
@@ -121,7 +119,6 @@ void setup() {
   Serial.println(drive.drive_delay);
   Serial.println("------");
   Serial.println(sizeof(drive));
-
 
   if (DEBUG) {
     long sum =0;
