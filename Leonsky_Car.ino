@@ -82,8 +82,18 @@ void setup() {
   pinMode(LED1,OUTPUT);
   pinMode(LED2,OUTPUT);
 
-  int val = map(60, 0, 1023, 0, 180);     // scale it to use it with the servo (value between 0 and 180) 
-  rul_servo.write(val);       
+  //  int val = map(60, 0, 1023, 0, 180);     // scale it to use it with the servo (value between 0 and 180) 
+  
+  rul_servo.write(90);       
+  delay(700);
+  rul_servo.write(180);       
+  delay(700);
+  rul_servo.write(90);       
+  delay(700);
+  rul_servo.write(0);       
+  delay(700);
+  rul_servo.write(90);       
+  
   
   drive.speed = map(50,0,100,0,255);
   drive.left = 60;              
